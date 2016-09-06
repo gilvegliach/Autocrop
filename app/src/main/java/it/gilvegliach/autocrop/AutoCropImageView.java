@@ -18,8 +18,8 @@ import java.util.concurrent.Future;
 public class AutoCropImageView extends ImageView {
   private final static ExecutorService EXECUTOR = Executors.newFixedThreadPool(4);
   private final Rect bounds = new Rect();
-  private final Paint paint = new Paint();
 
+  private final Paint paint = new Paint();
   {
     paint.setColor(Color.BLACK);
     paint.setStrokeWidth(2.f);
@@ -56,61 +56,52 @@ public class AutoCropImageView extends ImageView {
   }
 
   private int findLeft(int[] pixels, int w, int h) {
-    int l = w - 1;
-    for (int i = 0; i < h; i++) {
-      for (int j = 0; j < w; j++) {
-        int px = pixels[i * w + j];
-        if (!isBackground(px) && j < l) {
-          l = j;
-          break;
-        }
-      }
-    }
-    return l;
-  }
-
-  private int findTop(int[] pixels, int w, int h) {
-    int t = h - 1;
     for (int j = 0; j < w; j++) {
       for (int i = 0; i < h; i++) {
         int px = pixels[i * w + j];
-        if (!isBackground(px) && i < t) {
-          t = i;
-          break;
+        if (!isBackground(px)) {
+          return j;
         }
       }
     }
-    return t;
+    return 0;
+  }
+
+  private int findTop(int[] pixels, int w, int h) {
+    for (int i = 0; i < h; i++) {
+      for (int j = 0; j < w; j++) {
+        int px = pixels[i * w + j];
+        if (!isBackground(px)) {
+          return i;
+        }
+      }
+    }
+    return 0;
   }
 
   private int findRight(int[] pixels, int w, int h) {
-    int r = 0;
-    for (int i = 0; i < h; i++) {
-      for (int j = w - 1; j >= 0; j--) {
+    for (int j = w - 1; j >= 0; j--) {
+      for (int i = 0; i < h; i++) {
         int px = pixels[i * w + j];
-        if (!isBackground(px) && j > r) {
-          r = j;
-          break;
+        if (!isBackground(px)) {
+          return j;
         }
       }
     }
-    return r;
+    return w - 1;
   }
 
   private int findBottom(int[] pixels, int w, int h) {
-    int b = 0;
-    for (int j = 0; j < w; j++) {
-      for (int i = h - 1; i >= 0; i--) {
+    for (int i = h - 1; i >= 0; i--) {
+      for (int j = 0; j < w; j++) {
         int px = pixels[i * w + j];
-        if (!isBackground(px) && i > b) {
-          b = i;
-          break;
+        if (!isBackground(px)) {
+          return i;
         }
       }
     }
-    return b;
+    return h - 1;
   }
-
 
   public long setImageBitmapWithAutocropPar(Bitmap bm) {
     super.setImageBitmap(bm);
