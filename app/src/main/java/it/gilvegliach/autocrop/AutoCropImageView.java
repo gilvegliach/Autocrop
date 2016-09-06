@@ -45,7 +45,18 @@ public class AutoCropImageView extends ImageView {
     int h = bm.getHeight();
     int[] pixels = new int[w * h];
     bm.getPixels(pixels, 0, w, 0, 0, w, h);
-    int l = w - 1, t = h - 1, r = 0, b = 0;
+    int l = findLeft(pixels, w, h);
+    int t = findTop(pixels, w, h);
+    int r = findRight(pixels, w, h);
+    int b = findBottom(pixels, w, h);
+    bounds.set(l, t, r, b);
+    long delta = System.currentTimeMillis() - start;
+    Log.d("autocrop", "bounds: " + bounds + ", ms: " + delta);
+    return delta;
+  }
+
+  private int findLeft(int[] pixels, int w, int h) {
+    int l = w - 1;
     for (int i = 0; i < h; i++) {
       for (int j = 0; j < w; j++) {
         int px = pixels[i * w + j];
@@ -55,6 +66,11 @@ public class AutoCropImageView extends ImageView {
         }
       }
     }
+    return l;
+  }
+
+  private int findTop(int[] pixels, int w, int h) {
+    int t = h - 1;
     for (int j = 0; j < w; j++) {
       for (int i = 0; i < h; i++) {
         int px = pixels[i * w + j];
@@ -64,6 +80,11 @@ public class AutoCropImageView extends ImageView {
         }
       }
     }
+    return t;
+  }
+
+  private int findRight(int[] pixels, int w, int h) {
+    int r = 0;
     for (int i = 0; i < h; i++) {
       for (int j = w - 1; j >= 0; j--) {
         int px = pixels[i * w + j];
@@ -73,6 +94,11 @@ public class AutoCropImageView extends ImageView {
         }
       }
     }
+    return r;
+  }
+
+  private int findBottom(int[] pixels, int w, int h) {
+    int b = 0;
     for (int j = 0; j < w; j++) {
       for (int i = h - 1; i >= 0; i--) {
         int px = pixels[i * w + j];
@@ -82,10 +108,7 @@ public class AutoCropImageView extends ImageView {
         }
       }
     }
-    bounds.set(l, t, r, b);
-    long delta = System.currentTimeMillis() - start;
-    Log.d("autocrop", "bounds: " + bounds + ", ms: " + delta);
-    return delta;
+    return b;
   }
 
 
@@ -100,67 +123,28 @@ public class AutoCropImageView extends ImageView {
     Future<Integer> l = EXECUTOR.submit(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        int l = w - 1;
-        for (int i = 0; i < h; i++) {
-          for (int j = 0; j < w; j++) {
-            int px = pixels[i * w + j];
-            if (!isBackground(px) && j < l) {
-              l = j;
-              break;
-            }
-          }
-        }
-        return l;
+        return findLeft(pixels, w, h);
       }
     });
     Future<Integer> t = EXECUTOR.submit(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        int t = h - 1;
-        for (int j = 0; j < w; j++) {
-          for (int i = 0; i < h; i++) {
-            int px = pixels[i * w + j];
-            if (!isBackground(px) && i < t) {
-              t = i;
-              break;
-            }
-          }
-        }
-        return t;
+        return findTop(pixels, w, h);
       }
     });
     Future<Integer> r = EXECUTOR.submit(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        int r = 0;
-        for (int i = 0; i < h; i++) {
-          for (int j = w - 1; j >= 0; j--) {
-            int px = pixels[i * w + j];
-            if (!isBackground(px) && j > r) {
-              r = j;
-              break;
-            }
-          }
-        }
-        return r;
+        return findRight(pixels, w, h);
       }
     });
     Future<Integer> b = EXECUTOR.submit(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        int b = 0;
-        for (int j = 0; j < w; j++) {
-          for (int i = h - 1; i >= 0; i--) {
-            int px = pixels[i * w + j];
-            if (!isBackground(px) && i > b) {
-              b = i;
-              break;
-            }
-          }
-        }
-        return b;
+        return findBottom(pixels, w, h);
       }
     });
+
     try {
       bounds.set(l.get(), t.get(), r.get(), b.get());
     } catch (Exception e) {
